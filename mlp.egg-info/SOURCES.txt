@@ -1,0 +1,17 @@
+README.md
+setup.py
+mlp/__init__.py
+mlp/data_providers.py
+mlp/errors.py
+mlp/initialisers.py
+mlp/layers.py
+mlp/learning_rules.py
+mlp/models.py
+mlp/optimisers.py
+mlp/penalties.py
+mlp/schedulers.py
+mlp/test_methods.py
+mlp.egg-info/PKG-INFO
+mlp.egg-info/SOURCES.txt
+mlp.egg-info/dependency_links.txt
+mlp.egg-info/top_level.txt
