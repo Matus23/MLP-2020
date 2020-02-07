@@ -30,12 +30,15 @@ transform_val = transforms.Compose([
 ])
 
 dataset_name = args.dataset_name
+num_channels = 0
 if dataset_name == "cifar10":
     train_labeled_set, train_unlabeled_set, val_set, test_set = data_providers.get_cifar10('./data', args.n_labeled, transform_train=transform_train, transform_val=transform_val)
+    num_channels = 3
 elif dataset_name == "mnist":
     train_labeled_set, train_unlabeled_set, val_set, test_set = data_providers.get_MNIST('./data', args.n_labeled,
                                                                                            transform_train=transform_train,
                                                                                            transform_val=transform_val)
+    num_channels = 1
 labeled_trainloader = data.DataLoader(train_labeled_set, batch_size=args.batch_size, shuffle=True, num_workers=0, drop_last=True)
 unlabeled_trainloader = data.DataLoader(train_unlabeled_set, batch_size=args.batch_size, shuffle=True, num_workers=0, drop_last=True)
 val_loader = data.DataLoader(val_set, batch_size=args.batch_size, shuffle=False, num_workers=0)
@@ -43,7 +46,7 @@ test_loader = data.DataLoader(test_set, batch_size=args.batch_size, shuffle=Fals
 
 # Create two models (MixMatch)
 def create_model(ema=False):
-    model = WideResNet(num_classes=10)
+    model = WideResNet(num_classes=10, num_channels=num_channels)
 
 
     if ema:
