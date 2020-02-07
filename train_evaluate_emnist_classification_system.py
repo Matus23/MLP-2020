@@ -17,71 +17,6 @@ torch.manual_seed(seed=args.seed)  # sets pytorch's seed
 
 
 
-if args.dataset_name == 'emnist':
-    train_data = data_providers.EMNISTDataProvider('train', batch_size=args.batch_size,
-                                                   rng=rng,
-                                                   flatten=False)  # initialize our rngs using the argument set seed
-    val_data = data_providers.EMNISTDataProvider('valid', batch_size=args.batch_size,
-                                                 rng=rng,
-                                                 flatten=False)  # initialize our rngs using the argument set seed
-    test_data = data_providers.EMNISTDataProvider('test', batch_size=args.batch_size,
-                                                  rng=rng,
-                                                  flatten=False)  # initialize our rngs using the argument set seed
-    num_output_classes = train_data.num_classes
-
-elif args.dataset_name == 'cifar10':
-    transform_train = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        Cutout(n_holes=1, length=14),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
-
-    transform_test = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
-
-    trainset = data_providers.CIFAR10(root='data', set_name='train', download=True, transform=transform_train)
-    train_data = torch.utils.data.DataLoader(trainset, batch_size=100, shuffle=True, num_workers=4)
-
-    valset = data_providers.CIFAR10(root='data', set_name='val', download=True, transform=transform_test)
-    val_data = torch.utils.data.DataLoader(valset, batch_size=100, shuffle=False, num_workers=4)
-
-    testset = data_providers.CIFAR10(root='data', set_name='test', download=True, transform=transform_test)
-    test_data = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=4)
-
-    classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-    num_output_classes = 10
-
-elif args.dataset_name == 'cifar100':
-    transform_train = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        Cutout(n_holes=1, length=14),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
-
-    transform_test = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    ])
-
-    trainset = data_providers.CIFAR100(root='data', set_name='train', download=True, transform=transform_train)
-    train_data = torch.utils.data.DataLoader(trainset, batch_size=100, shuffle=True, num_workers=4)
-
-    valset = data_providers.CIFAR100(root='data', set_name='val', download=True, transform=transform_test)
-    val_data = torch.utils.data.DataLoader(valset, batch_size=100, shuffle=False, num_workers=4)
-
-    testset = data_providers.CIFAR100(root='data', set_name='test', download=True, transform=transform_test)
-    test_data = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=4)
-
-    num_output_classes = 100
-
-
-
 
 # Fetch dataset (MixMatch)
 transform_train = transforms.Compose([
@@ -94,7 +29,13 @@ transform_val = transforms.Compose([
     data_providers.ToTensor(),
 ])
 
-train_labeled_set, train_unlabeled_set, val_set, test_set = data_providers.get_cifar10('./data', args.n_labeled, transform_train=transform_train, transform_val=transform_val)
+dataset_name = args.dataset_name
+if dataset_name == "cifar10":
+    train_labeled_set, train_unlabeled_set, val_set, test_set = data_providers.get_cifar10('./data', args.n_labeled, transform_train=transform_train, transform_val=transform_val)
+elif dataset_name == "mnist":
+    train_labeled_set, train_unlabeled_set, val_set, test_set = data_providers.get_MNIST('./data', args.n_labeled,
+                                                                                           transform_train=transform_train,
+                                                                                           transform_val=transform_val)
 labeled_trainloader = data.DataLoader(train_labeled_set, batch_size=args.batch_size, shuffle=True, num_workers=0, drop_last=True)
 unlabeled_trainloader = data.DataLoader(train_unlabeled_set, batch_size=args.batch_size, shuffle=True, num_workers=0, drop_last=True)
 val_loader = data.DataLoader(val_set, batch_size=args.batch_size, shuffle=False, num_workers=0)
