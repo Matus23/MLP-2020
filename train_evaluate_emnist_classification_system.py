@@ -14,7 +14,7 @@ from torchvision import transforms
 import torch
 
 torch.manual_seed(seed=args.seed)  # sets pytorch's seed
-
+np.random.seed(args.seed)
 
 
 
