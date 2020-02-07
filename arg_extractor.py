@@ -21,23 +21,38 @@ def get_args():
     parser = argparse.ArgumentParser(
         description='Welcome to the MLP course\'s Pytorch training and inference helper script')
 
-    parser.add_argument('--batch_size', nargs="?", type=int, default=100, help='Batch_size for experiment')
+    parser.add_argument('--batch_size', nargs="?", type=int, default=64, help='Batch_size for experiment')
     parser.add_argument('--continue_from_epoch', nargs="?", type=int, default=-1, help='Batch_size for experiment')
     parser.add_argument('--dataset_name', type=str, help='Dataset on which the system will train/eval our model')
     parser.add_argument('--seed', nargs="?", type=int, default=7112018,
                         help='Seed to use for random number generator for experiment')
-    parser.add_argument('--image_num_channels', nargs="?", type=int, default=1,
-                        help='The channel dimensionality of our image-data')
-    parser.add_argument('--image_height', nargs="?", type=int, default=28, help='Height of image data')
-    parser.add_argument('--image_width', nargs="?", type=int, default=28, help='Width of image data')
-    parser.add_argument('--dim_reduction_type', nargs="?", type=str, default='strided_convolution',
-                        help='One of [strided_convolution, dilated_convolution, max_pooling, avg_pooling]')
-    parser.add_argument('--num_layers', nargs="?", type=int, default=4,
-                        help='Number of convolutional layers in the network (excluding '
-                             'dimensionality reduction layers)')
-    parser.add_argument('--num_filters', nargs="?", type=int, default=64,
-                        help='Number of convolutional filters per convolutional layer in the network (excluding '
-                             'dimensionality reduction layers)')
+    # parser.add_argument('--image_num_channels', nargs="?", type=int, default=1,
+    #                     help='The channel dimensionality of our image-data')
+    # parser.add_argument('--image_height', nargs="?", type=int, default=28, help='Height of image data')
+    # parser.add_argument('--image_width', nargs="?", type=int, default=28, help='Width of image data')
+    # parser.add_argument('--dim_reduction_type', nargs="?", type=str, default='strided_convolution',
+    #                     help='One of [strided_convolution, dilated_convolution, max_pooling, avg_pooling]')
+    # parser.add_argument('--num_layers', nargs="?", type=int, default=4,
+    #                     help='Number of convolutional layers in the network (excluding '
+    #                          'dimensionality reduction layers)')
+    # parser.add_argument('--num_filters', nargs="?", type=int, default=64,
+    #                     help='Number of convolutional filters per convolutional layer in the network (excluding '
+    #                          'dimensionality reduction layers)')
+
+    # argument added from MixMatch <begin>
+    parser.add_argument('--lr', '--learning-rate', default=0.002, type=float,
+                        metavar='LR', help='initial learning rate')
+    parser.add_argument('--n-labeled', type=int, default=250,
+                        help='Number of labeled data')
+    parser.add_argument('--val-iteration', type=int, default=1024,
+                        help='Number of labeled data')
+    parser.add_argument('--out', default='result',
+                        help='Directory to output the result')
+    parser.add_argument('--alpha', default=0.75, type=float)
+    parser.add_argument('--lambda-u', default=75, type=float)
+    parser.add_argument('--T', default=0.5, type=float)
+    parser.add_argument('--ema-decay', default=0.999, type=float)
+    # argument added from MixMatch <end>
     parser.add_argument('--num_epochs', nargs="?", type=int, default=100, help='The experiment\'s epoch budget')
     parser.add_argument('--experiment_name', nargs="?", type=str, default="exp_1",
                         help='Experiment name - to be used for building the experiment folder')
