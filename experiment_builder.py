@@ -84,6 +84,7 @@ class ExperimentBuilder(nn.Module):
         self.num_epochs = num_epochs
         self.train_criterion = SemiLoss()
         self.criterion = nn.CrossEntropyLoss().to(self.device)  # send the loss computation to the GPU
+        self.reconstuction_criterion = nn.MSELoss().to(self.device)
         if continue_from_epoch == -2:
             try:
                 self.best_val_model_idx, self.best_val_model_acc, self.state = self.load_model(
@@ -111,6 +112,7 @@ class ExperimentBuilder(nn.Module):
 
         batch_size = inputs_x.size(0)
         # Transform label to one-hot
+        # print(inputs_x[0])
         targets_x = torch.zeros(batch_size, 10).scatter_(1, targets_x.view(-1, 1), 1)
         inputs_x, targets_x = inputs_x.to(self.device), targets_x.to(self.device)
         inputs_u = inputs_u.to(self.device)
@@ -118,8 +120,8 @@ class ExperimentBuilder(nn.Module):
 
         with torch.no_grad():
             # compute guessed labels of unlabel samples
-            outputs_u = self.model(inputs_u)
-            outputs_u2 = self.model(inputs_u2)
+            outputs_u = self.model(inputs_u, ae=False)
+            outputs_u2 = self.model(inputs_u2, ae=False)
             p = (torch.softmax(outputs_u, dim=1) + torch.softmax(outputs_u2, dim=1)) / 2
             pt = p**(1/args.T)
             targets_u = pt / pt.sum(dim=1, keepdim=True)
@@ -145,19 +147,29 @@ class ExperimentBuilder(nn.Module):
         mixed_input = list(torch.split(mixed_input, batch_size))
         mixed_input = interleave(mixed_input, batch_size)
 
-        logits = [self.model(mixed_input[0])]
-        for input in mixed_input[1:]:
-            logits.append(self.model(input))
+        logits = []
+        reconstructions = []
+        # logits, reconstruction = [self.model(mixed_input[0])]
+        for input in mixed_input:
+            logit, reconstruction = self.model(input)
+            logits.append(logit)
+            reconstructions.append(reconstruction)
 
         # put interleaved samples back
         logits = interleave(logits, batch_size)
         logits_x = logits[0]
         logits_u = torch.cat(logits[1:], dim=0)
 
+        reconstructions = torch.cat(reconstructions, dim=0)
+        mixed_input = torch.cat(mixed_input,dim=0)
+
+        Lr = self.reconstuction_criterion(reconstructions, mixed_input)
+
+
         Lx, Lu, w = self.train_criterion(logits_x, mixed_target[:batch_size], logits_u, mixed_target[batch_size:],
                               epoch_idx + batch_idx / len(self.labeled_trainloader))
 
-        loss = Lx + w * Lu
+        loss = Lx + w * Lu + args.weight_Lr*Lr
 
         # compute gradient and do SGD step
         self.optimizer.zero_grad()
@@ -166,11 +178,11 @@ class ExperimentBuilder(nn.Module):
         self.ema_optimizer.step()
 
 
-        return loss.item(), Lx.item(), Lu.item()
+        return loss.item(), Lx.item(), Lu.item(), Lr.item()
 
     def run_evaluation_iter(self, inputs, targets):
 
-        outputs = self.ema_model(inputs)  # forward the data in the model
+        outputs = self.ema_model(inputs, ae=False)  # forward the data in the model
         loss = self.criterion(outputs, targets)  # compute loss
         _, predicted = torch.max(outputs.data, 1)  # get argmax of predictions
         accuracy = np.mean(list(predicted.eq(targets.data).cpu()))  # compute accuracy
@@ -210,12 +222,13 @@ class ExperimentBuilder(nn.Module):
                     unlabeled_train_iter = iter(self.unlabeled_trainloader)
                     (inputs_u, inputs_u2), _ = unlabeled_train_iter.next()
             # get data batches
-                loss, Lx, Lu = self.run_train_iter(inputs_x=inputs_x, targets_x=targets_x, inputs_u=inputs_u, inputs_u2=inputs_u2, epoch_idx=epoch_idx, batch_idx = batch_idx)  # take a training iter step
+                loss, Lx, Lu, Lr = self.run_train_iter(inputs_x=inputs_x, targets_x=targets_x, inputs_u=inputs_u, inputs_u2=inputs_u2, epoch_idx=epoch_idx, batch_idx = batch_idx)  # take a training iter step
                 current_epoch_losses["train_loss"].append(loss)  # add current iter loss to the train loss list
                 current_epoch_losses["train_loss_x"].append(Lx)  # add current iter acc to the train acc list
                 current_epoch_losses["train_loss_u"].append(Lu)
+                current_epoch_losses["train_loss_r"].append(Lr)
                 pbar_train.update(1)
-                pbar_train.set_description("loss: {:.4f}, Lx: {:.4f}, Lu: {:.4f}".format(loss, Lx, Lu))
+                pbar_train.set_description("loss: {:.4f}, Lx: {:.4f}, Lu: {:.4f}, Lr: {:.4f}".format(loss, Lx, Lu, Lr))
 
         return current_epoch_losses
 
@@ -279,11 +292,11 @@ class ExperimentBuilder(nn.Module):
         Runs experiment train and evaluation iterations, saving the model and best val model and val model accuracy after each epoch
         :return: The summary current_epoch_losses from starting epoch to total_epochs.
         """
-        total_losses = {"train_acc": [], "train_loss": [], "train_loss_x": [],"train_loss_u": [],"val_acc": [],
+        total_losses = {"train_acc": [], "train_loss": [], "train_loss_x": [], "train_loss_u": [], "train_loss_r": [],"val_acc": [],
                         "val_loss": [], "curr_epoch": []}  # initialize a dict to keep the per-epoch metrics
         for i, epoch_idx in enumerate(range(self.starting_epoch, self.num_epochs)):
             epoch_start_time = time.time()
-            current_epoch_losses = {"train_loss": [], "train_loss_x": [], "train_loss_u": [], "train_acc":[], "val_loss": [], "val_acc": []}
+            current_epoch_losses = {"train_loss": [], "train_loss_x": [], "train_loss_u": [], "train_loss_r": [], "train_acc":[], "val_loss": [], "val_acc": []}
 
             # train with labelled and unlabelled training data
             current_epoch_losses = self.run_training_epoch(current_epoch_losses, epoch_idx)

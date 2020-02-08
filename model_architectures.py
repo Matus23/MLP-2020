@@ -236,6 +236,8 @@ class BasicBlock(nn.Module):
         out = self.conv2(out)
         return torch.add(x if self.equalInOut else self.convShortcut(x), out)
 
+
+
 class NetworkBlock(nn.Module):
     def __init__(self, nb_layers, in_planes, out_planes, block, stride, dropRate=0.0, activate_before_residual=False):
         super(NetworkBlock, self).__init__()
@@ -269,6 +271,7 @@ class WideResNet(nn.Module):
         self.relu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
         self.fc = nn.Linear(nChannels[3], num_classes)
         self.nChannels = nChannels[3]
+        self.decoder = Decoder(nChannels[3], num_channels)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -281,12 +284,72 @@ class WideResNet(nn.Module):
                 nn.init.xavier_normal_(m.weight.data)
                 m.bias.data.zero_()
 
-    def forward(self, x):
+    def forward(self, x, ae=True):
         out = self.conv1(x)
         out = self.block1(out)
         out = self.block2(out)
         out = self.block3(out)
         out = self.relu(self.bn1(out))
+        # print("after relu", out.size())
         out = F.avg_pool2d(out, 8)
+        # print("after pooling", out.size())
         out = out.view(-1, self.nChannels)
-        return self.fc(out)
+        if ae:
+            return self.fc(out), self.decoder(out)
+        else:
+            return self.fc(out)
+
+
+class Decoder(nn.Module):
+    def __init__(self, nChannels, num_channels):
+        super(Decoder, self).__init__()
+        self.dfc3 = nn.Linear(nChannels, 4096)
+        self.bn3 = nn.BatchNorm1d(4096)
+        self.dfc2 = nn.Linear(4096, 4096)
+        self.bn2 = nn.BatchNorm1d(4096)
+        self.dfc1 = nn.Linear(4096, 256 * 4 * 4)
+        self.bn1 = nn.BatchNorm1d(256 * 4 * 4)
+        self.upsample1 = nn.Upsample(scale_factor=2)
+        self.dconv5 = nn.ConvTranspose2d(256, 256, 3, padding=0)
+        self.dconv4 = nn.ConvTranspose2d(256, 128, 3, padding=1)
+        self.dconv3 = nn.ConvTranspose2d(128, 128, 3, padding=1)
+        self.dconv2 = nn.ConvTranspose2d(128, 64, 5, padding=4)
+        self.dconv1 = nn.ConvTranspose2d(64, num_channels, 5, padding=2)
+
+
+    def forward(self, x):
+        x = self.dfc3(x)
+
+        x = F.relu(self.bn3(x))
+
+        x = self.dfc2(x)
+        x = F.relu(self.bn2(x))
+
+        x = self.dfc1(x)
+        x = F.relu(self.bn1(x))
+
+        # print(x.size())
+        x = x.view(64, 256, 4, 4)
+        # print (x.size())
+        x = self.upsample1(x)
+        # print x.size()
+        x = self.dconv5(x)
+        # print x.size()
+        x = F.relu(x)
+        # print x.size()
+        x = F.relu(self.dconv4(x))
+        # print x.size()
+        x = F.relu(self.dconv3(x))
+        # print x.size()
+        x = self.upsample1(x)
+        # print x.size()
+        x = self.dconv2(x)
+        # print x.size()
+        x = F.relu(x)
+        x = self.upsample1(x)
+        # print x.size()
+        x = self.dconv1(x)
+        # print x.size()
+        # x = F.sigmoid(x)
+        # print x
+        return x
