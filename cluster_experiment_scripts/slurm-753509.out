@@ -1,0 +1,20 @@
+use 1 GPU(s)
+use 1 GPU(s)
+[('batch_size', '64'), ('continue_from_epoch', '-1'), ('dataset_name', 'mnist'), ('seed', '2'), ('lr', '0.002'), ('n_labeled', '250'), ('val_iteration', '300'), ('out', 'result'), ('alpha', '0.75'), ('lambda_u', '75'), ('T', '0.5'), ('ema_decay', '0.999'), ('num_epochs', '100'), ('experiment_name', 'mnist_mixmatch_2'), ('use_gpu', 'True'), ('weight_decay_coefficient', '1e-05'), ('filepath_to_arguments_json_file', 'None')]
+[('batch_size', '64'), ('continue_from_epoch', '-1'), ('dataset_name', 'mnist'), ('seed', '2'), ('lr', '0.002'), ('n_labeled', '250'), ('val_iteration', '300'), ('out', 'result'), ('alpha', '0.75'), ('lambda_u', '75'), ('T', '0.5'), ('ema_decay', '0.999'), ('num_epochs', '100'), ('experiment_name', 'mnist_mixmatch_2'), ('use_gpu', 'True'), ('weight_decay_coefficient', '1e-05'), ('filepath_to_arguments_json_file', 'None')]
+Traceback (most recent call last):
+  File "train_evaluate_emnist_classification_system.py", line 40, in <module>
+    transform_val=transform_val)
+  File "/home/s1891076/MLP-2020/data_providers.py", line 816, in get_MNIST
+    base_dataset =  torchvision.datasets.MNIST(root, train=True, download=download)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/site-packages/torchvision/datasets/mnist.py", line 68, in __init__
+    self.download()
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/site-packages/torchvision/datasets/mnist.py", line 138, in download
+    makedir_exist_ok(self.raw_folder)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/site-packages/torchvision/datasets/utils.py", line 46, in makedir_exist_ok
+    os.makedirs(dirpath)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/os.py", line 210, in makedirs
+    makedirs(head, mode, exist_ok)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/os.py", line 220, in makedirs
+    mkdir(name, mode)
+FileNotFoundError: [Errno 2] No such file or directory: './data/MNIST'

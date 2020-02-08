@@ -1,0 +1,21 @@
+use 1 GPU(s)
+use 1 GPU(s)
+0it [00:00, ?it/s][('batch_size', '64'), ('continue_from_epoch', '-1'), ('dataset_name', 'mnist'), ('seed', '0'), ('lr', '0.002'), ('n_labeled', '250'), ('val_iteration', '300'), ('out', 'result'), ('alpha', '0.75'), ('lambda_u', '75'), ('T', '0.5'), ('ema_decay', '0.999'), ('num_epochs', '100'), ('experiment_name', 'mnist_mixmatch_0'), ('use_gpu', 'True'), ('weight_decay_coefficient', '1e-05'), ('filepath_to_arguments_json_file', 'None')]
+[('batch_size', '64'), ('continue_from_epoch', '-1'), ('dataset_name', 'mnist'), ('seed', '0'), ('lr', '0.002'), ('n_labeled', '250'), ('val_iteration', '300'), ('out', 'result'), ('alpha', '0.75'), ('lambda_u', '75'), ('T', '0.5'), ('ema_decay', '0.999'), ('num_epochs', '100'), ('experiment_name', 'mnist_mixmatch_0'), ('use_gpu', 'True'), ('weight_decay_coefficient', '1e-05'), ('filepath_to_arguments_json_file', 'None')]
+Downloading http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz to ./data/MNIST/raw/train-images-idx3-ubyte.gz
+Extracting ./data/MNIST/raw/train-images-idx3-ubyte.gz
+Traceback (most recent call last):
+  File "train_evaluate_emnist_classification_system.py", line 40, in <module>
+    transform_val=transform_val)
+  File "/home/s1891076/MLP-2020/data_providers.py", line 816, in get_MNIST
+    base_dataset =  torchvision.datasets.MNIST(root, train=True, download=download)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/site-packages/torchvision/datasets/mnist.py", line 68, in __init__
+    self.download()
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/site-packages/torchvision/datasets/mnist.py", line 146, in download
+    self.extract_gzip(gzip_path=file_path, remove_finished=True)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/site-packages/torchvision/datasets/mnist.py", line 127, in extract_gzip
+    gzip.GzipFile(gzip_path) as zip_f:
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/gzip.py", line 163, in __init__
+    fileobj = self.myfileobj = builtins.open(filename, mode or 'rb')
+FileNotFoundError: [Errno 2] No such file or directory: './data/MNIST/raw/train-images-idx3-ubyte.gz'
+0it [02:12, ?it/s]

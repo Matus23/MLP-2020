@@ -1,0 +1,104 @@
+use 1 GPU(s)
+use 1 GPU(s)
+0it [00:00, ?it/s]
+0it [00:00, ?it/s][A[('batch_size', '64'), ('continue_from_epoch', '-1'), ('dataset_name', 'cifar10'), ('seed', '0'), ('lr', '0.002'), ('n_labeled', '250'), ('val_iteration', '300'), ('out', 'result'), ('alpha', '0.75'), ('lambda_u', '75'), ('T', '0.5'), ('ema_decay', '0.999'), ('num_epochs', '100'), ('experiment_name', 'cifar10_mixmatch_0'), ('use_gpu', 'True'), ('weight_decay_coefficient', '1e-05'), ('filepath_to_arguments_json_file', 'None')]
+[('batch_size', '64'), ('continue_from_epoch', '-1'), ('dataset_name', 'cifar10'), ('seed', '0'), ('lr', '0.002'), ('n_labeled', '250'), ('val_iteration', '300'), ('out', 'result'), ('alpha', '0.75'), ('lambda_u', '75'), ('T', '0.5'), ('ema_decay', '0.999'), ('num_epochs', '100'), ('experiment_name', 'cifar10_mixmatch_0'), ('use_gpu', 'True'), ('weight_decay_coefficient', '1e-05'), ('filepath_to_arguments_json_file', 'None')]
+Downloading https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz to ./data/cifar-10-python.tar.gz
+Failed download. Trying https -> http instead. Downloading http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz to ./data/cifar-10-python.tar.gz
+Traceback (most recent call last):
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/urllib/request.py", line 1318, in do_open
+    encode_chunked=req.has_header('Transfer-encoding'))
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/http/client.py", line 1239, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/http/client.py", line 1285, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/http/client.py", line 1234, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/http/client.py", line 1026, in _send_output
+    self.send(msg)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/http/client.py", line 964, in send
+    self.connect()
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/http/client.py", line 1392, in connect
+    super().connect()
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/http/client.py", line 936, in connect
+    (self.host,self.port), self.timeout, self.source_address)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/socket.py", line 724, in create_connection
+    raise err
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/socket.py", line 713, in create_connection
+    sock.connect(sa)
+TimeoutError: [Errno 110] Connection timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/site-packages/torchvision/datasets/utils.py", line 80, in download_url
+    reporthook=gen_bar_updater()
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/urllib/request.py", line 248, in urlretrieve
+    with contextlib.closing(urlopen(url, data)) as fp:
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/urllib/request.py", line 223, in urlopen
+    return opener.open(url, data, timeout)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/urllib/request.py", line 526, in open
+    response = self._open(req, data)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/urllib/request.py", line 544, in _open
+    '_open', req)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/urllib/request.py", line 504, in _call_chain
+    result = func(*args)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/urllib/request.py", line 1361, in https_open
+    context=self._context, check_hostname=self._check_hostname)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/urllib/request.py", line 1320, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [Errno 110] Connection timed out>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/urllib/request.py", line 1318, in do_open
+    encode_chunked=req.has_header('Transfer-encoding'))
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/http/client.py", line 1239, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/http/client.py", line 1285, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/http/client.py", line 1234, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/http/client.py", line 1026, in _send_output
+    self.send(msg)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/http/client.py", line 964, in send
+    self.connect()
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/http/client.py", line 936, in connect
+    (self.host,self.port), self.timeout, self.source_address)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/socket.py", line 724, in create_connection
+    raise err
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/socket.py", line 713, in create_connection
+    sock.connect(sa)
+TimeoutError: [Errno 110] Connection timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "train_evaluate_emnist_classification_system.py", line 35, in <module>
+    train_labeled_set, train_unlabeled_set, val_set, test_set = data_providers.get_cifar10('./data', args.n_labeled, transform_train=transform_train, transform_val=transform_val)
+  File "/home/s1891076/MLP-2020/data_providers.py", line 655, in get_cifar10
+    base_dataset = torchvision.datasets.CIFAR10(root, train=True, download=download)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/site-packages/torchvision/datasets/cifar.py", line 66, in __init__
+    self.download()
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/site-packages/torchvision/datasets/cifar.py", line 153, in download
+    download_url(self.url, self.root, self.filename, self.tgz_md5)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/site-packages/torchvision/datasets/utils.py", line 89, in download_url
+    reporthook=gen_bar_updater()
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/urllib/request.py", line 248, in urlretrieve
+    with contextlib.closing(urlopen(url, data)) as fp:
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/urllib/request.py", line 223, in urlopen
+    return opener.open(url, data, timeout)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/urllib/request.py", line 526, in open
+    response = self._open(req, data)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/urllib/request.py", line 544, in _open
+    '_open', req)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/urllib/request.py", line 504, in _call_chain
+    result = func(*args)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/urllib/request.py", line 1346, in http_open
+    return self.do_open(http.client.HTTPConnection, req)
+  File "/home/s1891076/miniconda3/envs/mlp/lib/python3.6/urllib/request.py", line 1320, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [Errno 110] Connection timed out>
+0it [04:25, ?it/s]
+0it [02:12, ?it/s]
