@@ -264,13 +264,20 @@ class WideResNet(nn.Module):
         self.block1 = NetworkBlock(n, nChannels[0], nChannels[1], block, 1, dropRate, activate_before_residual=True)
         # 2nd block
         self.block2 = NetworkBlock(n, nChannels[1], nChannels[2], block, 2, dropRate)
-        # 3rd block
-        self.block3 = NetworkBlock(n, nChannels[2], nChannels[3], block, 2, dropRate)
+        # 3rd block for mean
+        self.block3_mean = NetworkBlock(n, nChannels[2], nChannels[3], block, 2, dropRate)
+        # 3rd block for std
+        self.block3_std = NetworkBlock(n, nChannels[2], nChannels[3], block, 2, dropRate)
 
-        # global average pooling and classifier
-        self.bn1 = nn.BatchNorm2d(nChannels[3], momentum=0.001)
-        self.relu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-        
+
+        self.bn1_mean = nn.BatchNorm2d(nChannels[3], momentum=0.001)
+        self.relu_mean = nn.LeakyReLU(negative_slope=0.1, inplace=True)
+
+        self.bn1_std = nn.BatchNorm2d(nChannels[3], momentum=0.001)
+        self.relu_std = nn.LeakyReLU(negative_slope=0.1, inplace=True)
+
+
+
 
 
 
@@ -289,16 +296,27 @@ class WideResNet(nn.Module):
                 nn.init.xavier_normal_(m.weight.data)
                 m.bias.data.zero_()
 
+    def reparameterize(self, mu, logvar):
+        std = torch.exp(0.5*logvar)
+        eps = torch.randn_like(std)
+        return mu + eps*std
+
     def forward(self, x, ae=True):
         out = self.conv1(x)
         out = self.block1(out)
         out = self.block2(out)
-        out = self.block3(out)
-        out = self.relu(self.bn1(out))
+        out_mean = self.block3_mean(out)
+        out_std = self.block3_std(out)
+        out_mean = self.relu_mean(self.bn1_mean(out_mean))
+        out_std = self.relu_std(self.bn1_std(out_std))
         # print("after relu", out.size())
-        out = F.avg_pool2d(out, 8)
+        out_mean = F.avg_pool2d(out_mean, 8)
+        out_std = F.avg_pool2d(out_std, 8)
+
+        out_sampled = self.reparameterize(out_mean,out_std)
+
         # print("after pooling", out.size())
-        out = out.view(-1, self.nChannels)
+        out = out_sampled.view(-1, self.nChannels)
         if ae:
             return self.fc(out), self.decoder(out)
         else:
