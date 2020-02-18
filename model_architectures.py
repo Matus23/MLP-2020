@@ -9,21 +9,34 @@ import math
 class BasicBlock(nn.Module):
     def __init__(self, in_planes, out_planes, stride, dropRate=0.0, activate_before_residual=False,decoder=False):
         super(BasicBlock, self).__init__()
-        self.bn1 = nn.BatchNorm2d(in_planes, momentum=0.001)
-        self.relu1 = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-        self.conv1 = nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
-                               padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(out_planes, momentum=0.001)
-        self.relu2 = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-        self.conv2 = nn.Conv2d(out_planes, out_planes, kernel_size=3, stride=1,
-                               padding=1, bias=False)
-        self.droprate = dropRate
-        self.equalInOut = (in_planes == out_planes)
-        #If this a decoder block
+
+
         if decoder:
-            self.convShortcut = (not self.equalInOut) and nn.ConvTranspose2d(in_planes, out_planes, kernel_size=1, stride=stride,
-            padding=0, bias=False) or None
+            self.bn1 = nn.BatchNorm2d(out_planes, momentum=0.001)
+            self.relu1 = nn.LeakyReLU(negative_slope=0.1, inplace=True)
+            self.conv1 = nn.ConvTranspose2d(in_planes, out_planes, kernel_size=3, stride=stride,
+                                   padding=1, bias=False)
+            self.bn2 = nn.BatchNorm2d(out_planes, momentum=0.001)
+            self.relu2 = nn.LeakyReLU(negative_slope=0.1, inplace=True)
+            self.conv2 = nn.ConvTranspose2d(out_planes, out_planes, kernel_size=3, stride=1,
+                                   padding=1, bias=False)
+            self.droprate = dropRate
+            self.equalInOut = (in_planes == out_planes)
+            self.convShortcut = (not self.equalInOut) and nn.ConvTranspose2d(in_planes, out_planes, kernel_size=1,
+                                                                             stride=stride,
+                                                                             padding=0, bias=False) or None
+
         else:
+            self.bn1 = nn.BatchNorm2d(out_planes, momentum=0.001)
+            self.relu1 = nn.LeakyReLU(negative_slope=0.1, inplace=True)
+            self.conv1 = nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
+                                   padding=1, bias=False)
+            self.bn2 = nn.BatchNorm2d(out_planes, momentum=0.001)
+            self.relu2 = nn.LeakyReLU(negative_slope=0.1, inplace=True)
+            self.conv2 = nn.Conv2d(out_planes, out_planes, kernel_size=3, stride=1,
+                                   padding=1, bias=False)
+            self.droprate = dropRate
+            self.equalInOut = (in_planes == out_planes)
             self.convShortcut = (not self.equalInOut) and nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride,
             padding=0, bias=False) or None
 
@@ -120,12 +133,12 @@ class WideResNet(nn.Module):
 
         out_sampled = self.reparameterize(out_mean,out_std)
 
-        # print("after pooling", out.size())
-        out = out_sampled.view(-1, self.nChannels)
+        print("Before Decoder", out_sampled.size())
+        out_c = out_sampled.view(-1, self.nChannels)
         if ae:
-            return self.fc(out), self.decoder(out)
+            return self.fc(out_c), self.decoder(out_sampled)
         else:
-            return self.fc(out)
+            return self.fc(out_c)
 
 class Decoder(nn.Module):
     def __init__(self, nChannels, num_channels,widen_factor,dropRate):
@@ -135,19 +148,19 @@ class Decoder(nn.Module):
         n = (28 - 4) / 6
         block = BasicBlock
         # 1st conv before any network block
-        self.block3 = NetworkBlock(n, nChannels[2], nChannels[3], block, 2, dropRate, decoder=True)
+        self.block3 = NetworkBlock(n, nChannels[3], nChannels[2], block, 2, dropRate, decoder=True)
 
-        self.block2 = NetworkBlock(n, nChannels[1], nChannels[2], block, 2, dropRate, decoder=True)
+        self.block2 = NetworkBlock(n, nChannels[2], nChannels[1], block, 2, dropRate, decoder=True)
 
-        self.block1 = NetworkBlock(n, nChannels[0], nChannels[1], block, 1, dropRate, activate_before_residual=True, decoder=True)
+        self.block1 = NetworkBlock(n, nChannels[1], nChannels[0], block, 1, dropRate, activate_before_residual=True, decoder=True)
 
         self.conv1 = nn.ConvTranspose2d(num_channels, nChannels[0], kernel_size=3, stride=1,padding=1, bias=False)
 
     def forward(self,x):
-        out = self.block3(out)
+        out = self.block3(x)
         out = self.block2(out)
         out = self.block1(out)
-        out = self.conv1(x)
+        out = self.conv1(out)
         return out
 
 
