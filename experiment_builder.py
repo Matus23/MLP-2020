@@ -178,7 +178,7 @@ class ExperimentBuilder(nn.Module):
         self.ema_optimizer.step()
 
 
-        return loss.item(), Lx.item(), Lu.item(), Lr.item()
+        return loss.item(), Lx.item(), (w*Lu).item(), (args.weight_Lr*Lr).item()
 
     def run_evaluation_iter(self, inputs, targets):
 
