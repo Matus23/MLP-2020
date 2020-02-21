@@ -35,7 +35,7 @@ export DATASET_DIR=${TMP}/datasets/
 
 source /home/${STUDENT_ID}/miniconda3/bin/activate mlp
 cd ..
-python train_evaluate_emnist_classification_system.py --batch_size 64 --continue_from_epoch -1 --seed 2 \
-                                                      --num_epochs 100 --experiment_name 'ae_cifar10_120_mixmatch_2' \
+python train_evaluate_emnist_classification_system.py --batch_size 64 --continue_from_epoch -1 --seed 1 \
+                                                      --num_epochs 100 --experiment_name 'ae_cifar10_120_mixmatch_1' \
                                                       --use_gpu "True" --val-iteration 500 --dataset_name "cifar10" \
                                                       --n-labeled 120
