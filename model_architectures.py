@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import math
 
 class FCCNetwork(nn.Module):
-    def __init__(self, input_shape=128, num_output_classes=10, num_filters=128, num_layers=0, use_bias=False):
+    def __init__(self, input_shape=(64,128), num_output_classes=10, num_filters=128, num_layers=0, use_bias=False):
         """
         Initializes a fully connected network similar to the ones implemented previously in the MLP package.
         :param input_shape: The shape of the inputs going in to the network.

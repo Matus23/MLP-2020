@@ -47,7 +47,7 @@ test_loader = data.DataLoader(test_set, batch_size=args.batch_size, shuffle=Fals
 # Create two models (MixMatch)
 def create_model(ema=False):
     model = WideResNet(num_classes=10, num_channels=num_channels)
-    linear_model = FCCNetwork(input_shape=128, num_output_classes=10, num_filters=128, num_layers=0, use_bias=True)
+    linear_model = FCCNetwork(input_shape=(64,128), num_output_classes=10, num_filters=128, num_layers=0, use_bias=True)
 
     if ema:
         for param in model.parameters():

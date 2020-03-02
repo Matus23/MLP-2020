@@ -126,8 +126,8 @@ class ExperimentBuilder(nn.Module):
 
         with torch.no_grad():
             # compute guessed labels of unlabel samples
-            outputs_u = self.model(inputs_u, ae=False)
-            outputs_u2 = self.model(inputs_u2, ae=False)
+            outputs_u = self.linear_model(self.model(inputs_u, ae=False))
+            outputs_u2 = self.linear_model(self.model(inputs_u2, ae=False))
             p = (torch.softmax(outputs_u, dim=1) + torch.softmax(outputs_u2, dim=1)) / 2
             pt = p**(1/args.T)
             targets_u = pt / pt.sum(dim=1, keepdim=True)
@@ -182,7 +182,7 @@ class ExperimentBuilder(nn.Module):
         # compute gradient and do SGD step
         self.optimizer.zero_grad()
         self.linear_optimizer.zero_grad()
-        loss_r.backward()
+        loss_r.backward(retain_graph=True)
         self.optimizer.step()
         self.ema_optimizer.step()
         loss_xu.backward()
