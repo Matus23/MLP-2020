@@ -175,9 +175,11 @@ class CIFAR10_labeled(torchvision.datasets.CIFAR10):
 
             if self.flag != 0:
                 noisy_idx = np.random.choice(len(indexs), self.flag, replace=False)
+                print(self.targets[noisy_idx])
                 for n in noisy_idx:
                     full_labels = np.setdiff1d(np.arange(10), self.targets[n])
                     self.targets[n] = np.random.choice(full_labels, 1)[0]
+                print(self.targets[noisy_idx])
         self.data = transpose(normalise(self.data))
 
     def __getitem__(self, index):
