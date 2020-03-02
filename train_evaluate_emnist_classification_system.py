@@ -4,7 +4,7 @@ import data_providers as data_providers
 from arg_extractor import get_args
 from data_augmentations import Cutout
 from experiment_builder import ExperimentBuilder
-from model_architectures import WideResNet
+from model_architectures import WideResNet, FCCNetwork
 import torch.utils.data as data
 
 args, device = get_args()  # get arguments from command line
@@ -47,20 +47,25 @@ test_loader = data.DataLoader(test_set, batch_size=args.batch_size, shuffle=Fals
 # Create two models (MixMatch)
 def create_model(ema=False):
     model = WideResNet(num_classes=10, num_channels=num_channels)
-
+    linear_model = FCCNetwork(input_shape=128, num_output_classes=10, num_filters=128, num_layers=0, use_bias=True)
 
     if ema:
         for param in model.parameters():
             param.detach_()
 
-    return model
-model = create_model()
-ema_model = create_model(ema=True)
+        for param in linear_model.parameters():
+            param.detach_()
+
+    return model, linear_model
+model, linear_model = create_model()
+ema_model, linear_ema_model = create_model(ema=True)
 
 
 
 
-conv_experiment = ExperimentBuilder(model=model, ema_model = ema_model, use_gpu=args.use_gpu,
+
+conv_experiment = ExperimentBuilder(model=model, ema_model = ema_model, linear_model=linear_model, linear_ema_model=linear_ema_model,
+                                    use_gpu=args.use_gpu,
                                     experiment_name=args.experiment_name,
                                     num_epochs=args.num_epochs,
                                     continue_from_epoch=args.continue_from_epoch,

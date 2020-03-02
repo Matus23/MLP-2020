@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import math
 
 class FCCNetwork(nn.Module):
-    def __init__(self, input_shape, num_output_classes, num_filters, num_layers, use_bias=False):
+    def __init__(self, input_shape=128, num_output_classes=10, num_filters=128, num_layers=0, use_bias=False):
         """
         Initializes a fully connected network similar to the ones implemented previously in the MLP package.
         :param input_shape: The shape of the inputs going in to the network.
@@ -269,7 +269,6 @@ class WideResNet(nn.Module):
         # global average pooling and classifier
         self.bn1 = nn.BatchNorm2d(nChannels[3], momentum=0.001)
         self.relu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-        self.fc = nn.Linear(nChannels[3], num_classes)
         self.nChannels = nChannels[3]
         self.decoder = Decoder(nChannels[3], num_channels)
 
@@ -295,9 +294,9 @@ class WideResNet(nn.Module):
         # print("after pooling", out.size())
         out = out.view(-1, self.nChannels)
         if ae:
-            return self.fc(out), self.decoder(out)
+            return out, self.decoder(out)
         else:
-            return self.fc(out)
+            return out
 
 
 class Decoder(nn.Module):

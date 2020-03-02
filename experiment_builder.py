@@ -15,7 +15,7 @@ from torch.optim.adam import Adam
 from storage_utils import save_statistics
 
 class ExperimentBuilder(nn.Module):
-    def __init__(self, model, ema_model, experiment_name, num_epochs, labeled_trainloader, unlabeled_trainloader ,
+    def __init__(self, model, ema_model, linear_model, linear_ema_model, experiment_name, num_epochs, labeled_trainloader, unlabeled_trainloader ,
                                     val_loader,test_loader, use_gpu, continue_from_epoch=-1):
         """
         Initializes an ExperimentBuilder object. Such an object takes care of running training and evaluation of a deep net
@@ -35,6 +35,8 @@ class ExperimentBuilder(nn.Module):
         self.experiment_name = experiment_name
         self.model = model
         self.ema_model = ema_model
+        self.linear_model = linear_model
+        self.linear_ema_model = linear_ema_model
         self.device = torch.cuda.current_device()
 
         # multiple gpu, single gpu, cpu
@@ -49,6 +51,8 @@ class ExperimentBuilder(nn.Module):
             self.device = torch.cuda.current_device()
             self.model.to(self.device)  # sends the model from the cpu to the gpu
             self.ema_model.to(self.device)
+            self.linear_model.to(self.device)
+            self.linear_ema_model.to(self.device)
             print('Use GPU', self.device)
         else:
             print("use CPU")
@@ -62,6 +66,8 @@ class ExperimentBuilder(nn.Module):
         self.test_loader = test_loader
         self.optimizer = Adam(self.model.parameters(), lr=args.lr)
         self.ema_optimizer = WeightEMA(model, ema_model, alpha=args.ema_decay)
+        self.linear_optimizer = Adam(self.linear_model.parameters(), lr=args.lr)
+        self.linear_ema_optimizer = WeightEMA(linear_model, linear_ema_model, alpha=args.ema_decay)
 
         # Generate the directory names
         self.experiment_folder = os.path.abspath(experiment_name)
@@ -152,7 +158,7 @@ class ExperimentBuilder(nn.Module):
         # logits, reconstruction = [self.model(mixed_input[0])]
         for input in mixed_input:
             logit, reconstruction = self.model(input)
-            logits.append(logit)
+            logits.append(self.linear_model(logit))
             reconstructions.append(reconstruction)
 
         # put interleaved samples back
@@ -169,20 +175,30 @@ class ExperimentBuilder(nn.Module):
         Lx, Lu, w = self.train_criterion(logits_x, mixed_target[:batch_size], logits_u, mixed_target[batch_size:],
                               epoch_idx + batch_idx / len(self.labeled_trainloader))
 
+        loss_r = args.weight_Lr*Lr
+        loss_xu = Lx + w * Lu
         loss = Lx + w * Lu + args.weight_Lr*Lr
 
         # compute gradient and do SGD step
         self.optimizer.zero_grad()
-        loss.backward()
+        self.linear_optimizer.zero_grad()
+        loss_r.backward()
         self.optimizer.step()
         self.ema_optimizer.step()
+        loss_xu.backward()
+        self.linear_optimizer.step()
+        self.linear_ema_optimizer.step()
+
+
+
+
 
 
         return loss.item(), Lx.item(), (w*Lu).item(), (args.weight_Lr*Lr).item()
 
     def run_evaluation_iter(self, inputs, targets):
 
-        outputs = self.ema_model(inputs, ae=False)  # forward the data in the model
+        outputs = self.linear_ema_model(self.ema_model(inputs, ae=False))  # forward the data in the model
         loss = self.criterion(outputs, targets)  # compute loss
         _, predicted = torch.max(outputs.data, 1)  # get argmax of predictions
         accuracy = np.mean(list(predicted.eq(targets.data).cpu()))  # compute accuracy
@@ -201,6 +217,8 @@ class ExperimentBuilder(nn.Module):
         """
         state['network_1'] = self.model.state_dict()  # save network parameter and other variables.
         state['network_2'] = self.ema_model.state_dict()
+        state['network_3'] = self.linear_model.state_dict()
+        state['network_4'] = self.linear_ema_model.state_dict()
         torch.save(state, f=os.path.join(model_save_dir, "{}_{}".format(model_save_name, str(
             model_idx))))  # save state at prespecified filepath
 
@@ -285,6 +303,8 @@ class ExperimentBuilder(nn.Module):
         state = torch.load(f=os.path.join(model_save_dir, "{}_{}".format(model_save_name, str(model_idx))))
         self.model.load_state_dict(state_dict=state['network_1'])
         self.ema_model.load_state_dict(state_dict=state['network_2'])
+        self.linear_model.load_state_dict(state_dict=state['network_3'])
+        self.linear_ema_model.load_state_dict(state_dict=state['network_4'])
         return state['best_val_model_idx'], state['best_val_model_acc'], state
 
     def run_experiment(self):
