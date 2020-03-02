@@ -14,6 +14,8 @@ import os
 import os.path
 import numpy as np
 import sys
+from arg_extractor import get_args
+args, device = get_args()
 if sys.version_info[0] == 2:
     import cPickle as pickle
 else:
@@ -655,7 +657,7 @@ def get_cifar10(root, n_labeled,
     base_dataset = torchvision.datasets.CIFAR10(root, train=True, download=download)
     train_labeled_idxs, train_unlabeled_idxs, val_idxs = train_val_split(base_dataset.targets, int(n_labeled / 10))
 
-    train_labeled_dataset = CIFAR10_labeled(root, train_labeled_idxs, train=True, transform=transform_train)
+    train_labeled_dataset = CIFAR10_labeled(root, train_labeled_idxs, train=True, transform=transform_train, flag=args.num_incorrect)
     train_unlabeled_dataset = CIFAR10_unlabeled(root, train_unlabeled_idxs, train=True,
                                                 transform=TransformTwice(transform_train))
     val_dataset = CIFAR10_labeled(root, val_idxs, train=True, transform=transform_val, download=True)
@@ -709,7 +711,7 @@ def pad(x, border=4):
 class RandomPadandCrop(object):
     """Crop randomly the image.
 
-    Args:
+    Args:2d(128, 64,
         output_size (tuple or int): Desired output size. If int, square crop
             is made.
     """
@@ -770,14 +772,22 @@ class CIFAR10_labeled(torchvision.datasets.CIFAR10):
 
     def __init__(self, root, indexs=None, train=True,
                  transform=None, target_transform=None,
-                 download=False):
+                 download=False, flag=0):
         super(CIFAR10_labeled, self).__init__(root, train=train,
                                               transform=transform, target_transform=target_transform,
                                               download=download)
         if indexs is not None:
             self.data = self.data[indexs]
             self.targets = np.array(self.targets)[indexs]
+            self.flag = flag
+
+            if self.flag != 0:
+                noisy_idx = np.random.choice(len(indexs), self.flag, replace=False)
+                for n in noisy_idx:
+                    full_labels = np.setdiff1d(np.arange(10), self.targets[n])
+                    self.targets[n] = np.random.choice(full_labels, 1)[0]
         self.data = transpose(normalise(self.data))
+        self.flag = flag
 
     def __getitem__(self, index):
         """
@@ -794,6 +804,8 @@ class CIFAR10_labeled(torchvision.datasets.CIFAR10):
 
         if self.target_transform is not None:
             target = self.target_transform(target)
+
+
 
         return img, target
 
