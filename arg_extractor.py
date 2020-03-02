@@ -44,6 +44,9 @@ def get_args():
                         metavar='LR', help='initial learning rate')
     parser.add_argument('--n-labeled', type=int, default=250,
                         help='Number of labeled data')
+
+    parser.add_argument('--num_incorrect', type=int, default=0,
+                        help='Number of incorrect labels')
     parser.add_argument('--val-iteration', type=int, default=1024,
                         help='Number of labeled data')
     parser.add_argument('--out', default='result',
