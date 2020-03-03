@@ -47,7 +47,7 @@ class AUTOENCODER(nn.Module):
 def main():
     print("TESTING")
     depth=28
-    vae = AE(10,depth,2,0.0,3)
+    vae = VAE(10,depth,2,0.0,3)
     vae = vae.float()
    
     x = torch.randn(64,3,32,32)

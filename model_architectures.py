@@ -40,7 +40,8 @@ class EncoderBasicBlock(nn.Module):
             out = F.dropout(out, p=self.droprate, training=self.training)
         out = self.conv2(out)
 
-        print("EncoderBasic ----------- "+str(x.shape)+str(out.shape))
+        
+        #print("EncoderBasic ----------- "+str(x.shape)+str(out.shape))
         return torch.add(x if self.equalInOut else self.convShortcut(x), out)
 
 class EncoderNetworkBlock(nn.Module):
@@ -53,26 +54,32 @@ class EncoderNetworkBlock(nn.Module):
             layers.append(block(i == 0 and in_planes or out_planes, out_planes, i == 0 and stride or 1, dropRate, activate_before_residual))
         return nn.Sequential(*layers)
     def forward(self, x):
-        
+        #print("----------------------------------------")
         return self.layer(x)
 
 class DecoderBasicBlock(nn.Module):
     def __init__(self, in_planes, out_planes, stride, dropRate=0.0, activate_before_residual=False):
         super(DecoderBasicBlock, self).__init__()
+        if stride ==2:
+            kern = 4
+        else:
+            kern = 3
+
+        padd_out = 0
         self.bn1 = nn.BatchNorm2d(in_planes, momentum=0.001)
         self.relu1 = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-        self.conv1 = nn.ConvTranspose2d(in_planes, out_planes, kernel_size=3, stride=stride,
-                               padding=1, bias=False)
+        self.conv1 = nn.ConvTranspose2d(in_planes, out_planes, kernel_size=kern, stride=stride,
+                               padding=1,output_padding=padd_out, bias=False)
         self.bn2 = nn.BatchNorm2d(out_planes, momentum=0.001)
         self.relu2 = nn.LeakyReLU(negative_slope=0.1, inplace=True)
         self.conv2 = nn.ConvTranspose2d(out_planes, out_planes, kernel_size=3, stride=1,
-                               padding=1, bias=False)
+                               padding=1,output_padding=padd_out, bias=False)
+
         self.droprate = dropRate
         self.equalInOut = (in_planes == out_planes)
         #If this a decoder block
         
-        self.convShortcut = (not self.equalInOut) and nn.ConvTranspose2d(in_planes, out_planes, kernel_size=1, stride=stride,
-        padding=0, bias=False) or None
+        self.convShortcut = (not self.equalInOut) and nn.ConvTranspose2d(in_planes, out_planes, kernel_size=kern, stride=stride,padding=1, bias=False) or None
 
         self.activate_before_residual = activate_before_residual
     def forward(self, x):
@@ -94,8 +101,7 @@ class DecoderBasicBlock(nn.Module):
             out = F.dropout(out, p=self.droprate, training=self.training)
         
         out = self.conv2(out)
-        
-        print("DecoderBasic ----------- "+str(x.shape)+str(out.shape))
+        #print("DecoderBasic ----------- "+str(x.shape)+str(out.shape))
         return torch.add(x if self.equalInOut else self.convShortcut(x), out)
 
 class DecoderNetworkBlock(nn.Module):
@@ -107,9 +113,10 @@ class DecoderNetworkBlock(nn.Module):
         for i in range(int(nb_layers)):
             in_pl = in_planes
             out_pl = (i == int(nb_layers)-1 and out_planes or in_planes)
-            layers.append(block(in_pl, out_pl, i == int(nb_layers) and stride or 1, dropRate, activate_before_residual))
+            layers.append(block(in_pl, out_pl, i == int(nb_layers)-1 and stride or 1, dropRate, activate_before_residual))
         return nn.Sequential(*layers)
     def forward(self, x):
+        #print("----------------------------------------")
         return self.layer(x)
 
 # Wide ResNet model copied from MixMatch PyTorch implementation
@@ -246,11 +253,11 @@ class Decoder(nn.Module):
         n = (28 - 4) / 6
         block = DecoderBasicBlock
         # 1st conv before any network block
-        self.block3 = DecoderNetworkBlock(n, nChannels[3], nChannels[2], block, 2, dropRate, activate_before_residual=True)
+        self.block3 = DecoderNetworkBlock(n, nChannels[3], nChannels[2], block, 2, dropRate)
 
         self.block2 = DecoderNetworkBlock(n, nChannels[2], nChannels[1], block, 2, dropRate)
 
-        self.block1 = DecoderNetworkBlock(n, nChannels[1], nChannels[0], block, 1, dropRate)
+        self.block1 = DecoderNetworkBlock(n, nChannels[1], nChannels[0], block, 1, dropRate, activate_before_residual=True)
 
         self.conv1 = nn.ConvTranspose2d(nChannels[0], num_channels, kernel_size=3, stride=1,padding=1, bias=False)
 
