@@ -4,7 +4,7 @@ import data_providers as data_providers
 from arg_extractor import get_args
 from data_augmentations import Cutout
 from experiment_builder import ExperimentBuilder
-from model_architectures import WideResNet
+from model_architectures import WideResNet, AE, VAE
 import torch.utils.data as data
 
 args, device = get_args()  # get arguments from command line
@@ -46,7 +46,10 @@ test_loader = data.DataLoader(test_set, batch_size=args.batch_size, shuffle=Fals
 
 # Create two models (MixMatch)
 def create_model(ema=False):
-    model = WideResNet(num_classes=10, num_channels=num_channels)
+    if args.arc == 'ae':
+        model = AE(num_classes=10, num_channels=num_channels)
+    elif args.arc == 'vae':
+        model = VAE(num_classes=10, num_channels=num_channels)
 
 
     if ema:

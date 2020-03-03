@@ -290,10 +290,14 @@ class AE(nn.Module):
                 nn.init.xavier_normal_(m.weight.data)
                 m.bias.data.zero_()
 
-    def forward(self,x):
+    def forward(self,x,ae=True):
         pred,out = self.encoder(x)
         out = self.decoder(out)
-        return pred,out
+
+        if ae:
+            return pred, out
+        else:
+            return pred
 
 class VAE(nn.Module):
     def __init__(self, num_classes, depth=28, widen_factor=2, dropRate=0.0, num_channels=1):
@@ -312,7 +316,10 @@ class VAE(nn.Module):
                 nn.init.xavier_normal_(m.weight.data)
                 m.bias.data.zero_()
 
-    def forward(self,x):
+    def forward(self,x, ae=True):
         pred,out = self.encoder(x)
         out = self.decoder(out)
-        return pred,out
+        if ae:
+            return pred, out
+        else:
+            return pred
