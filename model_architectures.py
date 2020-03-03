@@ -222,7 +222,7 @@ class VAE_Encoder(nn.Module):
 
         self.bn1_std = nn.BatchNorm2d(nChannels[3], momentum=0.001)
         self.relu_std = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-        
+
         self.bn1 = nn.BatchNorm2d(nChannels[3], momentum=0.001)
         self.relu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
         self.fc = nn.Linear(nChannels[3], num_classes)
@@ -231,14 +231,15 @@ class VAE_Encoder(nn.Module):
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5*logvar)
         eps = torch.randn_like(std)
+        # print('MU: ',torch.min(mu),'EPS*STD: ',torch.min(eps*std),'LOGVAR: ',torch.min(logvar))
         return mu + eps*std
 
     def forward(self,x):
         out = self.conv1(x)
         out = self.block1(out)
         out = self.block2(out)
-        out_mean = self.block3_mean(out)
-        out_std = self.block3_std(out)
+        out_mean = self.bn1_mean(self.relu_mean(self.block3_mean(out)))
+        out_std = self.bn1_std(self.relu_std(self.block3_std(out)))
 
         out_sampled = self.reparameterize(out_mean,out_std)
 
@@ -246,7 +247,7 @@ class VAE_Encoder(nn.Module):
         out_pr = self.relu(self.bn1(out_sampled))
         out_pr = F.avg_pool2d(out_pr, 8)
         out_pr = out_pr.view(-1, self.nChannels)
-        return self.fc(out_pr), out_sampled
+        return self.fc(out_pr), out_sampled, out_mean, out_std
 
 class Decoder(nn.Module):
     def __init__(self, depth=28, widen_factor=2, dropRate=0.0, num_channels=1):
@@ -289,12 +290,14 @@ class AE(nn.Module):
             elif isinstance(m, nn.Linear):
                 nn.init.xavier_normal_(m.weight.data)
                 m.bias.data.zero_()
+            elif isinstance(m, nn.ConvTranspose2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
 
     def forward(self,x,ae=True):
         pred,out = self.encoder(x)
-        out = self.decoder(out)
-
         if ae:
+            out = self.decoder(out)
             return pred, out
         else:
             return pred
@@ -315,11 +318,15 @@ class VAE(nn.Module):
             elif isinstance(m, nn.Linear):
                 nn.init.xavier_normal_(m.weight.data)
                 m.bias.data.zero_()
+            elif isinstance(m, nn.ConvTranspose2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+
 
     def forward(self,x, ae=True):
-        pred,out = self.encoder(x)
-        out = self.decoder(out)
+        pred, out, mu, logvar = self.encoder(x)
         if ae:
-            return pred, out
+            out = self.decoder(out)
+            return pred, out, mu, logvar
         else:
             return pred

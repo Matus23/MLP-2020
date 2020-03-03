@@ -149,11 +149,26 @@ class ExperimentBuilder(nn.Module):
 
         logits = []
         reconstructions = []
-        # logits, reconstruction = [self.model(mixed_input[0])]
-        for input in mixed_input:
-            logit, reconstruction = self.model(input)
-            logits.append(logit)
-            reconstructions.append(reconstruction)
+
+
+
+        if args.arc == 'ae':
+            # logits = [model(mixed_input[0])]
+            for input in mixed_input:
+                logit, reconstruction = self.model(input)
+                logits.append(logit)
+                reconstructions.append(reconstruction)
+        elif args.arc == 'vae':
+            mus = []
+            logvars = []
+            for input in mixed_input:
+                logit, reconstruction, mu, logvar = self.model(input)
+                logits.append(logit)
+                reconstructions.append(reconstruction)
+                # mus.append(mu)
+                # logvars.append(logvar)
+            # mus = torch.cat(mus, dim=0)
+            # logvars = torch.cat(logvars, dim=0)
 
         # put interleaved samples back
         logits = interleave(logits, batch_size)
@@ -163,7 +178,13 @@ class ExperimentBuilder(nn.Module):
         reconstructions = torch.cat(reconstructions, dim=0)
         mixed_input = torch.cat(mixed_input,dim=0)
 
-        Lr = self.reconstuction_criterion(reconstructions, mixed_input)
+        if args.arc == 'ae':
+            Lr = self.reconstuction_criterion(reconstructions, mixed_input)
+        elif args.arc == 'vae':
+            # KLD = -0.5 * torch.sum(1 + logvars - mus.pow(2) - logvars.exp())
+            Lr = self.reconstuction_criterion(reconstructions, mixed_input)
+
+
 
 
         Lx, Lu, w = self.train_criterion(logits_x, mixed_target[:batch_size], logits_u, mixed_target[batch_size:],
@@ -178,7 +199,7 @@ class ExperimentBuilder(nn.Module):
         self.ema_optimizer.step()
 
 
-        return loss.item(), Lx.item(), Lu.item(), Lr.item()
+        return loss.item(), Lx.item(), (w*Lu).item(), Lr.item()
 
     def run_evaluation_iter(self, inputs, targets):
 
