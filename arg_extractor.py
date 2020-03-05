@@ -54,6 +54,7 @@ def get_args():
     parser.add_argument('--ema-decay', default=0.999, type=float)
     # argument added from MixMatch <end>
     parser.add_argument('--weight_Lr', default=1.0, type=float)
+    parser.add_argument('--beta', default=1.0, type=float)
     parser.add_argument('--num_epochs', nargs="?", type=int, default=100, help='The experiment\'s epoch budget')
     parser.add_argument('--experiment_name', nargs="?", type=str, default="exp_1",
                         help='Experiment name - to be used for building the experiment folder')
