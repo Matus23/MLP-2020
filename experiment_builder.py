@@ -189,10 +189,14 @@ class ExperimentBuilder(nn.Module):
 
 
         Lx, Lu, w = self.train_criterion(logits_x, mixed_target[:batch_size], logits_u, mixed_target[batch_size:],
-                              epoch_idx + batch_idx / len(self.labeled_trainloader))
+                              epoch_idx + batch_idx / args.val_iteration)
 
-        loss = Lx + w * Lu + args.weight_Lr*Lr
 
+
+        if args.lr_decay == 'decay':
+            loss = Lx + w * Lu + args.weight_Lr*Lr*(1-epoch_idx/(args.num_epochs*1.0))
+        else:
+            loss = Lx + w * Lu + args.weight_Lr*Lr
         # compute gradient and do SGD step
         self.optimizer.zero_grad()
         loss.backward()
@@ -403,9 +407,14 @@ class WeightEMA(object):
 # a function and a class to define SemiLoss
 def linear_rampup(current, rampup_length=args.num_epochs):
     if rampup_length == 0:
+        # print("length0")
         return 1.0
     else:
+        # print('current_before', current)
+        # print('rl',rampup_length)
         current = np.clip(current / rampup_length, 0.0, 1.0)
+        # print("lengthnot0")
+        print('current_after', current)
         return float(current)
 
 class SemiLoss(object):
@@ -414,7 +423,6 @@ class SemiLoss(object):
 
         Lx = -torch.mean(torch.sum(F.log_softmax(outputs_x, dim=1) * targets_x, dim=1))
         Lu = torch.mean((probs_u - targets_u)**2)
-
         return Lx, Lu, args.lambda_u * linear_rampup(epoch)
 
 # interleave function used during the training
