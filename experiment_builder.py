@@ -194,7 +194,8 @@ class ExperimentBuilder(nn.Module):
 
 
         if args.lr_decay == 'decay':
-            loss = Lx + w * Lu + args.weight_Lr*Lr*(1-epoch_idx/(args.num_epochs*1.0))
+            loss = Lx + w * Lu + args.weight_Lr*Lr*(1-(epoch_idx + batch_idx / args.val_iteration)/(args.num_epochs*1.0))
+
         else:
             loss = Lx + w * Lu + args.weight_Lr*Lr
         # compute gradient and do SGD step
