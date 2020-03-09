@@ -415,7 +415,7 @@ def linear_rampup(current, rampup_length=args.num_epochs):
         # print('rl',rampup_length)
         current = np.clip(current / rampup_length, 0.0, 1.0)
         # print("lengthnot0")
-        print('current_after', current)
+        # print('current_after', current)
         return float(current)
 
 class SemiLoss(object):
