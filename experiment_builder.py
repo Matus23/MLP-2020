@@ -113,51 +113,50 @@ class ExperimentBuilder(nn.Module):
         # Transform label to one-hot
         targets_x = torch.zeros(batch_size, 10).scatter_(1, targets_x.view(-1, 1), 1)
         inputs_x, targets_x = inputs_x.to(self.device), targets_x.to(self.device)
-        inputs_u = inputs_u.to(self.device)
-        inputs_u2 = inputs_u2.to(self.device)
-
-        with torch.no_grad():
-            # compute guessed labels of unlabel samples
-            outputs_u = self.model(inputs_u)
-            outputs_u2 = self.model(inputs_u2)
-            p = (torch.softmax(outputs_u, dim=1) + torch.softmax(outputs_u2, dim=1)) / 2
-            pt = p**(1/args.T)
-            targets_u = pt / pt.sum(dim=1, keepdim=True)
-            targets_u = targets_u.detach()
+        # inputs_u = inputs_u.to(self.device)
+        # inputs_u2 = inputs_u2.to(self.device)
+        #
+        # with torch.no_grad():
+        #     # compute guessed labels of unlabel samples
+        #     outputs_u = self.model(inputs_u)
+        #     outputs_u2 = self.model(inputs_u2)
+        #     p = (torch.softmax(outputs_u, dim=1) + torch.softmax(outputs_u2, dim=1)) / 2
+        #     pt = p**(1/args.T)
+        #     targets_u = pt / pt.sum(dim=1, keepdim=True)
+        #     targets_u = targets_u.detach()
 
         # mixup
-        all_inputs = torch.cat([inputs_x, inputs_u, inputs_u2], dim=0)
-        all_targets = torch.cat([targets_x, targets_u, targets_u], dim=0)
+        # all_inputs = torch.cat([inputs_x, inputs_u, inputs_u2], dim=0)
+        # all_targets = torch.cat([targets_x, targets_u, targets_u], dim=0)
 
-        l = np.random.beta(args.alpha, args.alpha)
-
-        l = max(l, 1 - l)
-
-        idx = torch.randperm(all_inputs.size(0))
-
-        input_a, input_b = all_inputs, all_inputs[idx]
-        target_a, target_b = all_targets, all_targets[idx]
-
-        mixed_input = l * input_a + (1 - l) * input_b
-        mixed_target = l * target_a + (1 - l) * target_b
+        # l = np.random.beta(args.alpha, args.alpha)
+        #
+        # l = max(l, 1 - l)
+        #
+        # idx = torch.randperm(all_inputs.size(0))
+        #
+        # input_a, input_b = all_inputs, all_inputs[idx]
+        # target_a, target_b = all_targets, all_targets[idx]
+        #
+        # mixed_input = l * input_a + (1 - l) * input_b
+        # mixed_target = l * target_a + (1 - l) * target_b
 
         # interleave labeled and unlabed samples between batches to get correct batchnorm calculation
-        mixed_input = list(torch.split(mixed_input, batch_size))
-        mixed_input = interleave(mixed_input, batch_size)
+        # mixed_input = list(torch.split(mixed_input, batch_size))
+        # mixed_input = interleave(mixed_input, batch_size)
 
-        logits = [self.model(mixed_input[0])]
-        for input in mixed_input[1:]:
-            logits.append(self.model(input))
+        logits = self.model(inputs_x)
+        # for input in mixed_input[1:]:
+        #     logits.append(self.model(input))
 
         # put interleaved samples back
-        logits = interleave(logits, batch_size)
-        logits_x = logits[0]
-        logits_u = torch.cat(logits[1:], dim=0)
+        # logits = interleave(logits, batch_size)
+        # logits_x = logits[0]
+        # logits_u = torch.cat(logits[1:], dim=0)
 
-        Lx, Lu, w = self.train_criterion(logits_x, mixed_target[:batch_size], logits_u, mixed_target[batch_size:],
-                              epoch_idx + batch_idx / args.val_iteration)
+        Lx= self.train_criterion(logits, targets_x)
 
-        loss = Lx + w * Lu
+        loss = Lx
 
         # compute gradient and do SGD step
         self.optimizer.zero_grad()
@@ -166,7 +165,7 @@ class ExperimentBuilder(nn.Module):
         self.ema_optimizer.step()
 
 
-        return loss.item(), Lx.item(), Lu.item()
+        return loss.item(), 0, 0
 
     def run_evaluation_iter(self, inputs, targets):
 
@@ -374,13 +373,12 @@ def linear_rampup(current, rampup_length=args.num_epochs):
         return float(current)
 
 class SemiLoss(object):
-    def __call__(self, outputs_x, targets_x, outputs_u, targets_u, epoch):
-        probs_u = torch.softmax(outputs_u, dim=1)
+    def __call__(self, outputs_x, targets_x):
 
         Lx = -torch.mean(torch.sum(F.log_softmax(outputs_x, dim=1) * targets_x, dim=1))
-        Lu = torch.mean((probs_u - targets_u)**2)
+        # Lu = torch.mean((probs_u - targets_u)**2)
 
-        return Lx, Lu, args.lambda_u * linear_rampup(epoch)
+        return Lx
 
 # interleave function used during the training
 def interleave_offsets(batch, nu):
