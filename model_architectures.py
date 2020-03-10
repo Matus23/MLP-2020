@@ -413,9 +413,9 @@ class VQVAE_Encoder(nn.Module):
         loss, quantized = self._vq_vae(out_re)
         if args.vqorder == 'after':
             out_pr = self.relu(self.bn1(quantized))
-            print('after')
+
         elif args.vqorder == 'before':
-            print('before')
+
             out_pr = self.relu(self.bn1(out_re))
         out_pr = F.avg_pool2d(out_pr, 8)
         out_pr = out_pr.view(-1, self.nChannels)

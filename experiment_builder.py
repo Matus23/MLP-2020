@@ -193,7 +193,8 @@ class ExperimentBuilder(nn.Module):
             KLD = -0.5 * torch.mean(1 + logvars - mus.pow(2) - logvars.exp())
             Lr = self.reconstuction_criterion(reconstructions, mixed_input)+args.beta*KLD
         elif args.arc == 'vqvae':
-            Lr = self.reconstuction_criterion(reconstructions, mixed_input) + sum(emb_losses)/192
+
+            Lr = self.reconstuction_criterion(reconstructions, mixed_input)+args.beta*sum(emb_losses)/192
 
 
 
