@@ -68,6 +68,8 @@ def get_args():
                         help='')
     parser.add_argument('--lr_decay', nargs="?", type=str, default=None,
                         help='')
+    parser.add_argument('--vqorder', nargs="?", type=str, default=None,
+                        help='')
     args = parser.parse_args()
 
     if args.filepath_to_arguments_json_file is not None:

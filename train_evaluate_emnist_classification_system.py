@@ -4,7 +4,7 @@ import data_providers as data_providers
 from arg_extractor import get_args
 from data_augmentations import Cutout
 from experiment_builder import ExperimentBuilder
-from model_architectures import WideResNet, AE, VAE
+from model_architectures import AE, VAE, VQVAE
 import torch.utils.data as data
 
 args, device = get_args()  # get arguments from command line
@@ -50,7 +50,8 @@ def create_model(ema=False):
         model = AE(num_classes=10, num_channels=num_channels)
     elif args.arc == 'vae':
         model = VAE(num_classes=10, num_channels=num_channels)
-
+    elif args.arc == 'vqvae':
+        model = VQVAE(num_classes=10, num_channels=num_channels)
 
     if ema:
         for param in model.parameters():

@@ -169,6 +169,14 @@ class ExperimentBuilder(nn.Module):
                 logvars.append(logvar)
             mus = torch.cat(mus, dim=0)
             logvars = torch.cat(logvars, dim=0)
+        elif args.arc == 'vqvae':
+            emb_losses = []
+            for input in mixed_input:
+                logit, reconstruction, emb_loss = self.model(input)
+                logits.append(logit)
+                reconstructions.append(reconstruction)
+                emb_losses.append(emb_loss)
+            # emb_losses = torch.cat(emb_losses, dim=0)
 
         # put interleaved samples back
         logits = interleave(logits, batch_size)
@@ -184,6 +192,10 @@ class ExperimentBuilder(nn.Module):
             # print(mixed_input.size(0))
             KLD = -0.5 * torch.mean(1 + logvars - mus.pow(2) - logvars.exp())
             Lr = self.reconstuction_criterion(reconstructions, mixed_input)+args.beta*KLD
+        elif args.arc == 'vqvae':
+            Lr = self.reconstuction_criterion(reconstructions, mixed_input) + sum(emb_losses)/192
+
+
 
 
 
