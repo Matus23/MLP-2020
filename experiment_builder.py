@@ -182,8 +182,8 @@ class ExperimentBuilder(nn.Module):
             Lr = self.reconstuction_criterion(reconstructions, mixed_input)
         elif args.arc == 'vae':
             # print(mixed_input.size(0))
-            KLD = -0.5 * torch.sum(1 + logvars - mus.pow(2) - logvars.exp())
-            Lr = self.reconstuction_criterion(reconstructions, mixed_input)+args.beta*0.001*KLD/mixed_input.size(0)
+            KLD = -0.5 * torch.mean(1 + logvars - mus.pow(2) - logvars.exp())
+            Lr = self.reconstuction_criterion(reconstructions, mixed_input)+args.beta*KLD
 
 
 
