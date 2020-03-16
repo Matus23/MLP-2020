@@ -396,7 +396,7 @@ class VQVAE_Encoder(nn.Module):
         # 3rd block for mean
         self.block3 = EncoderNetworkBlock(n, nChannels[2], nChannels[3], block, 2, dropRate)
 
-        self._vq_vae = VectorQuantizer(num_embeddings=512, embedding_dim=128,
+        self._vq_vae = VectorQuantizer(num_embeddings=args.num_emb, embedding_dim=128,
                                        commitment_cost=0.25)
 
         self.bn1 = nn.BatchNorm2d(nChannels[3], momentum=0.001)
