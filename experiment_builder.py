@@ -111,10 +111,14 @@ class ExperimentBuilder(nn.Module):
 
         batch_size = inputs_x.size(0)
         # Transform label to one-hot
-        targets_x = torch.zeros(batch_size, 10).scatter_(1, targets_x.view(-1, 1), 1)
+        if args.dataset_name == 'cifar10':
+            targets_x = torch.zeros(batch_size, 10).scatter_(1, targets_x.view(-1, 1), 1)
+        elif args.dataset_name == 'cifar100':
+            targets_x = torch.zeros(batch_size, 100).scatter_(1, targets_x.view(-1, 1), 1)
         inputs_x, targets_x = inputs_x.to(self.device), targets_x.to(self.device)
         inputs_u = inputs_u.to(self.device)
         inputs_u2 = inputs_u2.to(self.device)
+
 
         with torch.no_grad():
             # compute guessed labels of unlabel samples
